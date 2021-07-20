@@ -1,9 +1,8 @@
-const {Schema, Types} = require('mongoose')
+const {Schema, model} = require('mongoose')
 const md5 = require ('md5')
-// const UserSchemas = require('../src/schemas/User')
 
-module.exports = new Schema ({
-    // _id: Types.ObjectId,
+
+let User = new Schema({
     email: {
         type: String,
         required : true
@@ -27,3 +26,18 @@ module.exports = new Schema ({
 
 })
 
+User.statics.findByToken = function (token){
+    return this.findOne ({confirmationToken: token})
+}
+// la diferencia es que este se usa:
+// User.findByToken()
+
+
+User.methods.findByEmail = function(cb){ // cb=callback 
+    return model('User').find({email : this.email }, cb)
+}
+// y este se usa:
+// let user = new User ({email:"..."}) 
+// user.findByEmail()
+
+module.exports = model ('User', User) 

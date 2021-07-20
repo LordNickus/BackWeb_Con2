@@ -1,76 +1,57 @@
 const express = require('express')
 const app = express()
-const path = require ('path')
 const bodyParser = require ('body-parser')
-const nodemailer = require ('nodemailer')
-const md5 = require ('md5')
+const mongoose = require('mongoose')
+mongoose.connect('mongodb://localhost:27017/itMaster_backend', {useNewUrlParser: true, useUnifiedTopology: true})
+const authRouter = require('./src/routes/auth')
+const categoriesRouter = require('./src/routes/categories')
+const productsRouter = require('./src/routes/products')
+const Product = require('./src/schemas/Products')
+const Brand = require('./src/schemas/Brands')
+const brandsRouter = require('./src/routes/brands')
+const cors = require('cors')
 
-
+app.use(cors()) //valida las peticiones!! poner primero
 app.use(bodyParser.json())
 app.use(bodyParser.urlencoded({extended:false}))
+
+app.use('/api/auth', authRouter)
+app.use('/api/categories', categoriesRouter)
+app.use('/api/products', productsRouter)
+app.use('/api/brands', brandsRouter)
+
 
 app.get('/', function(req,res){
     res.send('Bienvenido a backEnd')
 })
 
-app.get( '/register', function (req, res){
-    let file = path.resolve('src','views','register.html')
-
-    console.log(file)
-
-    res.sendFile(file)
-     
+app.get('/products', function (req, res){
+// listado de productos
 })
 
-app.get('/confirm', function (req,res){
-    res.send('Confirmado!')
+app.get('/products/create', function (req, res){
+// mostrar formulario de alta de productos
+    res.sendFile(__dirname + '/src/views/products-create.html')
 })
 
-app.post('/register', async function(req, res){
-    let token = md5(req.body.email + Date.now())
-
-    console.log(token)
-    let testAccount = await nodemailer.createTestAccount();
-
-    let transporter = nodemailer.createTransport({
-        host: "smtp.ethereal.email",
-        port: 587,
-        secure: false, // true for 465, false for other ports
-        auth: {
-          user: testAccount.user, // generated ethereal user
-          pass: testAccount.pass, // generated ethereal password
-        },
-        tls: {
-            rejectUnauthorized: false,
-        }
-      });
-
-    let info = await transporter.sendMail({
-        from: '"BackEnders 👻" <foo@example.com>', // sender address
-        to: "bar@example.com, baz@example.com", // list of receivers
-        subject: "Hello ✔ FWorld", // Subject line
-        text: "Hello F world?", // plain text body
-        html: `
-        <b>Hello F world?</b>
-        <a href="http://localhost:4000/confirm?token=${token}">
-         Confirmar cuenta
-         </a>
-         
-         `,
-      });  
-
-    console.log("Message sent: %s", info.messageId);
-  
-    console.log("Preview URL: %s", nodemailer.getTestMessageUrl(info));
-  
-      
-
-
-
-    
-    res.send(req.body)
+app.post('/products', function (req, res){
+ //   recibir datos del formulario
+    let schema = new Product ({
+        ...req.body,
+        seller_id: 12345
+    })
+    schema.save().then(()=>{
+        res.status(201).send ({message: 'created'})
+    }).catch(err => {
+        console.log(err)
+        res.status(422).send({message: err})
+//422 informacion invalida
+    })
+ //   guardar en la base de datos
+ //   enviar una respuesta
 })
+
 
 app.listen(4000)
-
+// http://localhost:4000
 
